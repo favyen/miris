@@ -14,7 +14,7 @@ func PlanRefine(context plannerContext, filterPlan miris.FilterPlan) miris.Refin
 	refinerConfigs := make(map[string]map[string]string)
 	for name, refinerFunc := range refine.PSRefiners {
 		log.Printf("[plan-refine] trying ps refiner %s", name)
-		r := refinerFunc(context.freq, context.trainTracks, context.predFunc, nil)
+		r := refinerFunc(context.freq, context.trainTracks, context.predFunc, context.modelCfg.GetRefineCfg(name, context.freq), nil)
 		defer r.Close()
 		cfg := r.Plan(context.valTracks, context.bound)
 		log.Printf("[plan-refine] ... got cfg=%v", cfg)
@@ -23,7 +23,7 @@ func PlanRefine(context plannerContext, filterPlan miris.FilterPlan) miris.Refin
 	}
 	for name, refinerFunc := range refine.InterpRefiners {
 		log.Printf("[plan-refine] trying interp refiner %s", name)
-		r := refinerFunc(context.freq, context.trainTracks, context.predFunc, nil)
+		r := refinerFunc(context.freq, context.trainTracks, context.predFunc, context.modelCfg.GetRefineCfg(name, context.freq), nil)
 		defer r.Close()
 		cfg := r.Plan(context.valTracks, context.bound)
 		log.Printf("[plan-refine] ... got cfg=%v", cfg)
@@ -38,19 +38,28 @@ func PlanRefine(context plannerContext, filterPlan miris.FilterPlan) miris.Refin
 		trainLabels[i] = context.predFunc([][]miris.Detection{track})
 	}
 	selFilter := filter.FilterMap[filterPlan.Name](context.freq, context.trainTracks, trainLabels, context.modelCfg.GetFilterCfg(filterPlan.Name, context.freq))
-	scores := selFilter.Predict(context.valTracks)
+	coarseTracks := make([][]miris.Detection, len(context.valTracks))
+	for i, track := range context.valTracks {
+		coarseTracks[i] = miris.GetCoarse(track, context.freq, 0)
+	}
+	scores := selFilter.Predict(coarseTracks)
 	selFilter.Close()
 	var filteredTracks [][]miris.Detection
+	var origSatisfy, filterSatisfy int
 	for i, track := range context.valTracks {
-		if scores[i] < filterPlan.Threshold {
+		satisfy := context.predFunc([][]miris.Detection{track})
+		if satisfy {
+			origSatisfy++
+		}
+		if scores[i] < filterPlan.Threshold || len(coarseTracks[i]) == 0 {
 			continue
 		}
-		coarse := miris.GetCoarse(track, context.freq, 0)
-		if len(coarse) == 0 {
-			continue
+		if satisfy {
+			filterSatisfy++
 		}
-		filteredTracks = append(filteredTracks, coarse)
+		filteredTracks = append(filteredTracks, coarseTracks[i])
 	}
+	log.Printf("[plan-refine] %d/%d tracks passed filtering (%d satisfy before filter, %d after)", len(filteredTracks), len(context.valTracks), origSatisfy, filterSatisfy)
 
 	var bestNames [2]string
 	var bestFrames int = -1

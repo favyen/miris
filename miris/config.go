@@ -22,6 +22,12 @@ type FilterModel struct {
 	Cfg map[string]string
 }
 
+type RefineModel struct {
+	Name string
+	Freq int
+	Cfg map[string]string
+}
+
 type GNNModel struct {
 	Freq int
 	ModelPath string
@@ -29,6 +35,7 @@ type GNNModel struct {
 
 type ModelConfig struct {
 	Filters []FilterModel
+	Refiners []RefineModel
 	GNN []GNNModel
 }
 
@@ -38,6 +45,16 @@ func (cfg ModelConfig) GetFilterCfg(name string, freq int) map[string]string {
 			continue
 		}
 		return filter.Cfg
+	}
+	return nil
+}
+
+func (cfg ModelConfig) GetRefineCfg(name string, freq int) map[string]string {
+	for _, refiner := range cfg.Refiners {
+		if refiner.Name != name || refiner.Freq != freq {
+			continue
+		}
+		return refiner.Cfg
 	}
 	return nil
 }
@@ -65,7 +82,9 @@ type RefinePlan struct {
 
 type PlannerConfig struct {
 	Freq int
+	Bound float64
 	Filter FilterPlan
+	QSamples map[int][]float64
 	Q map[int]float64
 	Refine RefinePlan
 }

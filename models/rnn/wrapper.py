@@ -1,5 +1,8 @@
 import model
 
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 import json
 import random
 import sys
@@ -13,32 +16,15 @@ def oprint(s):
 	sys.stdout.write(s + '\n')
 	sys.stdout.flush()
 
-mode = sys.argv[1]
+num_outputs = int(sys.argv[1])
 model_path = sys.argv[2]
-NORM_SIZE = 1000.0
 
-m = model.Model()
-session = tf.Session()
+m = model.Model(num_outputs=num_outputs)
+config = tf.ConfigProto(
+	device_count={'GPU': 0}
+)
+session = tf.Session(config=config)
 m.saver.restore(session, model_path)
-
-def get_data(detection):
-	cx = (detection['left']+detection['right'])/2/NORM_SIZE
-	cy = (detection['top']+detection['bottom'])/2/NORM_SIZE
-	width = (detection['right'] - detection['left'])/NORM_SIZE
-	height = (detection['bottom']-detection['top'])/NORM_SIZE
-	return [cx, cy, width, height]
-
-def pad_track(track):
-	if track is None:
-		track = []
-	if len(track) > model.MAX_LENGTH:
-		track = random.sample(track, model.MAX_LENGTH)
-		track.sort(key=lambda det: det['frame_idx'])
-	data = [get_data(det) for det in track]
-	l = len(data)
-	while len(data) < model.MAX_LENGTH:
-		data.append([0, 0, 0, 0])
-	return data, l
 
 while True:
 	line = sys.stdin.readline()
@@ -47,9 +33,10 @@ while True:
 	tracks = json.loads(line.strip())
 	outputs = []
 	for i in xrange(0, len(tracks), model.BATCH_SIZE):
-		eprint('... {}/{}'.format(i, len(tracks)))
+		if i % 1024 == 0:
+			eprint('... {}/{}'.format(i, len(tracks)))
 		batch = tracks[i:i+model.BATCH_SIZE]
-		batch = [pad_track(track) for track in batch]
+		batch = [model.pad_track(track) for track in batch]
 		batch_outputs = session.run(m.outputs, feed_dict={
 			m.is_training: False,
 			m.inputs: [t[0] for t in batch],

@@ -5,40 +5,58 @@ import (
 	"../miris"
 	"../predicate"
 
+	"fmt"
 	"log"
 	"sort"
 )
 
 const QThreads int = 8
 
-func GetQSamples(ppCfg miris.PreprocessConfig, segment miris.Segment, freq int, bound float64, modelPath string, predFunc predicate.Predicate) []float64 {
-	log.Printf("[plan-q] begin %s", segment.FramePath)
+func GetQSamplesSegment(ppCfg miris.PreprocessConfig, segment miris.Segment, freq int, modelPath string, predFunc predicate.Predicate) []float64 {
+	log.Printf("[plan-q] begin %s @ %d", segment.FramePath, freq)
 	model := gnn.NewGNN(modelPath, segment.TrackPath, segment.FramePath, ppCfg.FrameScale)
 	defer model.Close()
 	detections := miris.ReadDetections(segment.TrackPath)
 	tracks := miris.GetTracks(detections)
-	goodTracks := make(map[int]bool)
+
+	// we will abuse the detection scores to fill in the gnn q values
+	// that say whether the detection matches to the next one (or, for last
+	// detection, to the terminal)
+	scoredTracks := make(map[int][]miris.Detection)
 	for _, track := range tracks {
 		if !predFunc([][]miris.Detection{track}) {
 			continue
 		}
-		goodTracks[track[0].TrackID] = true
+		scoredTracks[track[0].TrackID] = track
+		for i := range track {
+			track[i].Score = 1
+		}
 	}
 
-	// largest Q threshold needed to correctly get each track
-	trackMaxQs := make(map[int]float64)
+	// return idx of detection in track with the specified frameIdx
+	findTrackIdxByFrame := func(track []miris.Detection, frameIdx int) int {
+		for i, detection := range track {
+			if detection.FrameIdx == frameIdx {
+				return i
+			}
+		}
+		return -1
+	}
 
+	var frames [][2]int
 	for frameIdx := 0; frameIdx < len(detections)-freq; frameIdx += freq {
-		log.Printf("[plan-q] %s ... %d/%d", segment.FramePath, frameIdx, len(detections))
-		idx1 := frameIdx
-		idx2 := frameIdx+freq
-		mat := model.Infer(idx1, idx2)
+		frames = append(frames, [2]int{frameIdx, frameIdx+freq})
+	}
+	mats := model.InferMany(frames, fmt.Sprintf("[plan-q] [%s @ %d]", segment.FramePath, freq))
+	for counter, mat := range mats {
+		idx1 := frames[counter][0]
+		idx2 := frames[counter][1]
 
 		// for each left detection:
 		// (1) get max probability over outgoing edges
 		// (2) get q_frac as fraction of correct track probability
 		for i, leftDet := range detections[idx1] {
-			if !goodTracks[leftDet.TrackID] {
+			if scoredTracks[leftDet.TrackID] == nil {
 				continue
 			}
 			var maxProb float64 = mat[i][len(detections[idx2])]
@@ -52,26 +70,83 @@ func GetQSamples(ppCfg miris.PreprocessConfig, segment miris.Segment, freq int, 
 					matchProb = prob
 				}
 			}
-			if maxProb < 0.01 {
-				continue
-			}
 			var curQ float64
-			if matchProb == -1 {
+			if maxProb < 0.01 {
+				curQ = 1
+			} else if matchProb == -1 {
 				curQ = mat[i][len(detections[idx2])] / maxProb
 			} else {
 				curQ = matchProb / maxProb
 			}
-			oldQ, ok := trackMaxQs[leftDet.TrackID]
-			if !ok || curQ < oldQ {
-				trackMaxQs[leftDet.TrackID] = curQ
-			}
+
+			track := scoredTracks[leftDet.TrackID]
+			idxInTrack := findTrackIdxByFrame(track, idx1)
+			track[idxInTrack].Score = curQ
 		}
 	}
 
-	var samples []float64
-	for _, q := range trackMaxQs {
-		samples = append(samples, q)
+	// disconnects is set of disconnected indices in track
+	// if i is disconnected, it means
+	getLongestSegment := func(track []miris.Detection, disconnects map[int]bool) []miris.Detection {
+		discList := []int{-1, len(track)-1}
+		for idx := range disconnects {
+			discList = append(discList, idx)
+		}
+		sort.Ints(discList)
+		var longestSegment []miris.Detection
+		for i := 0; i < len(discList)-1; i++ {
+			segment := track[discList[i]+1:discList[i+1]+1]
+			if len(segment) > len(longestSegment) {
+				longestSegment = segment
+			}
+		}
+		return longestSegment
 	}
+
+	var samples []float64
+	for _, track := range scoredTracks {
+		// iteratively disconnect the track at edges with smallest Q until either:
+		// (a) the longest contiguous segment no longer satisfies the predicate
+		// (b) the longest contiguous segment is <= 50% of the original track
+		disconnects := make(map[int]bool)
+		for {
+			var bestQ float64 = 0.99
+			var bestIdx int = -1
+			for i, detection := range track {
+				if disconnects[i] {
+					continue
+				}
+				if detection.Score < bestQ {
+					bestIdx = i
+					bestQ = detection.Score
+				}
+			}
+			if bestIdx == -1 {
+				break
+			}
+			disconnects[bestIdx] = true
+			segment := getLongestSegment(track, disconnects)
+			if predFunc([][]miris.Detection{segment}) && len(segment) > len(track)/2 {
+				continue
+			}
+			// it doesn't work, roll back this last disconnect and stop
+			delete(disconnects, bestIdx)
+			break
+		}
+
+		// largest Q threshold needed to correctly capture the track
+		var trackMaxQ float64 = 1
+		for i, detection := range track {
+			if disconnects[i] {
+				continue
+			}
+			if detection.Score < trackMaxQ {
+				trackMaxQ = detection.Score
+			}
+		}
+		samples = append(samples, trackMaxQ)
+	}
+
 	return samples
 }
 
@@ -80,7 +155,8 @@ type qjob struct {
 	segment miris.Segment
 }
 
-func PlanQ(maxFreq int, bound float64, ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig) map[int]float64 {
+// Returns map from freq to list of MinQ samples.
+func GetQSamples(maxFreq int, ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig) map[int][]float64 {
 	predFunc := predicate.GetPredicate(ppCfg.Predicate)
 
 	jobch := make(chan qjob)
@@ -90,7 +166,7 @@ func PlanQ(maxFreq int, bound float64, ppCfg miris.PreprocessConfig, modelCfg mi
 		go func() {
 			m := make(map[int][]float64)
 			for job := range jobch {
-				samples := GetQSamples(ppCfg, job.segment, job.freq, bound, modelCfg.GetGNN(job.freq).ModelPath, predFunc)
+				samples := GetQSamplesSegment(ppCfg, job.segment, job.freq, modelCfg.GetGNN(job.freq).ModelPath, predFunc)
 				m[job.freq] = append(m[job.freq], samples...)
 			}
 			donech <- m
@@ -110,7 +186,10 @@ func PlanQ(maxFreq int, bound float64, ppCfg miris.PreprocessConfig, modelCfg mi
 			allSamples[freq] = append(allSamples[freq], samples...)
 		}
 	}
+	return allSamples
+}
 
+func PlanQ(allSamples map[int][]float64, bound float64) map[int]float64 {
 	freqToQ := map[int]float64{1: 1}
 	for freq, samples := range allSamples {
 		sort.Float64s(samples)
@@ -119,17 +198,4 @@ func PlanQ(maxFreq int, bound float64, ppCfg miris.PreprocessConfig, modelCfg mi
 		log.Printf("[plan-q] compute q=%v at freq=%d", q, freq)
 	}
 	return freqToQ
-}
-
-func PlanQAt(freq int, bound float64, modelPath string, predFunc predicate.Predicate, ppCfg miris.PreprocessConfig) float64 {
-	var samples []float64
-	for _, segment := range ppCfg.ValSegments {
-		curSamples := GetQSamples(segment, freq, bound, modelPath, predFunc)
-		samples = append(samples, curSamples...)
-	}
-
-	sort.Float64s(samples)
-	q := samples[int((1-bound)*float64(len(samples)))]
-	log.Printf("[plan-q] compute q=%v at freq=%d", q, freq)
-	return q
 }

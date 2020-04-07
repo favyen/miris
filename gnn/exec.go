@@ -4,7 +4,6 @@ import (
 	"../miris"
 
 	"fmt"
-	"log"
 	"sort"
 )
 
@@ -42,21 +41,28 @@ func (gnn *GNN) Update(edges []Edge, frames [][2]int, q map[int]float64) []Edge 
 	sort.Slice(frames, func(i, j int) bool {
 		return frames[i][0] < frames[j][0]
 	})
+
+	frameInferList := make([][2]int, len(frames))
+	for i, frameSpec := range frames {
+		idx1 := frameSpec[0]
+		freq := frameSpec[1]
+		frameInferList[i] = [2]int{idx1, idx1+freq}
+	}
+	mats := gnn.InferMany(frameInferList, "[gnn-update]")
+
 	for i, frameSpec := range frames {
 		idx1 := frameSpec[0]
 		freq := frameSpec[1]
 		idx2 := idx1+freq
+		mat := mats[i]
 		if q[freq] == 0 {
 			panic(fmt.Errorf("gnn update got freq %d without q on frames (%d,%d)", freq, idx1, idx2))
 		}
 		if len(gnn.detections[idx1]) == 0 || len(gnn.detections[idx2]) == 0 {
 			continue
 		}
-		if i % 100 == 0 {
-			log.Printf("[gnn-update] %d/%d", idx1, len(gnn.detections))
-		}
 		termIdx := len(gnn.detections[idx2])
-		mat := gnn.Infer(idx1, idx2)
+
 		// new edges, grouped by the left detection
 		newEdges := make(map[[2]int][]Edge)
 		if q[freq] < 1 {

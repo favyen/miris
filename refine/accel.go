@@ -48,7 +48,7 @@ type AccelRefiner struct {
 	accelThreshold float64
 }
 
-func MakeAccelRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, cfg map[string]string) Refiner {
+func MakeAccelRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, modelCfg map[string]string, cfg map[string]string) Refiner {
 	r := &AccelRefiner{
 		freq: freq,
 		predFunc: predFunc,

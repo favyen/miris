@@ -3,9 +3,11 @@ package refine
 import (
 	"../miris"
 	"../predicate"
+
+	"log"
 )
 
-type RefinerFunc func(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, cfg map[string]string) Refiner
+type RefinerFunc func(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, modelCfg map[string]string, cfg map[string]string) Refiner
 
 type Refiner interface {
 	Plan(valTracks [][]miris.Detection, bounds float64) map[string]string
@@ -72,6 +74,7 @@ func RunFake(refiners []Refiner, tracks [][]miris.Detection, detections [][]miri
 				inTracks[i] = trackByID[trackID]
 			}
 			needed, refined := r.Step(inTracks, getSeenList())
+			log.Printf("[refine-runfake] ... need %d frames", len(needed))
 
 			for _, frameIdx := range needed {
 				if seen[frameIdx] {

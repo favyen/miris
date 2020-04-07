@@ -7,8 +7,29 @@ import math
 import time
 from PIL import Image
 
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 MAX_LENGTH = 64
+NORM_SIZE = 1000.0
+
+def get_data(detection, track):
+	cx = (detection['left']+detection['right'])/2/NORM_SIZE
+	cy = (detection['top']+detection['bottom'])/2/NORM_SIZE
+	width = (detection['right'] - detection['left'])/NORM_SIZE
+	height = (detection['bottom']-detection['top'])/NORM_SIZE
+	t = (detection['frame_idx'] - track[0]['frame_idx'])/100.0
+	return [cx, cy, width, height, t]
+
+def pad_track(track):
+	if track is None:
+		track = []
+	if len(track) > MAX_LENGTH:
+		track = [track[0], track[-1]] + random.sample(track[1:-1], MAX_LENGTH-2)
+		track.sort(key=lambda det: det['frame_idx'])
+	data = [get_data(det, track) for det in track]
+	l = len(data)
+	while len(data) < MAX_LENGTH:
+		data.append([0, 0, 0, 0, 0])
+	return data, l
 
 class Model:
 	def _fc_layer(self, name, input_var, input_size, output_size, options = {}):
@@ -44,17 +65,17 @@ class Model:
 			else:
 				raise Exception('invalid activation {} specified'.format(activation))
 
-	def __init__(self):
+	def __init__(self, num_outputs):
 		tf.reset_default_graph()
 
 		self.is_training = tf.placeholder(tf.bool)
-		self.inputs = tf.placeholder(tf.float32, [None, MAX_LENGTH, 4])
-		self.targets = tf.placeholder(tf.float32, [None])
+		self.inputs = tf.placeholder(tf.float32, [None, MAX_LENGTH, 5])
+		self.targets = tf.placeholder(tf.float32, [None, num_outputs])
 		self.lengths = tf.placeholder(tf.int32, [None])
 		self.learning_rate = tf.placeholder(tf.float32)
 
 		self.layer0 = tf.reshape(
-			self._fc_layer('layer0', tf.reshape(self.inputs, [-1, 4]), 4, 32),
+			self._fc_layer('layer0', tf.reshape(self.inputs, [-1, 5]), 5, 32),
 			[-1, MAX_LENGTH, 32]
 		)
 		with tf.variable_scope('rnn_cell') as scope:
@@ -65,7 +86,7 @@ class Model:
 				sequence_length=self.lengths,
 				dtype=tf.float32
 			)
-		self.pre_outputs = self._fc_layer('pre_outputs', self.rnn_outputs, 32, 1, {'activation': 'none'})[:, 0]
+		self.pre_outputs = self._fc_layer('pre_outputs', self.rnn_outputs, 32, num_outputs, {'activation': 'none'})
 		self.outputs = tf.nn.sigmoid(self.pre_outputs)
 		self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.targets, logits=self.pre_outputs))
 

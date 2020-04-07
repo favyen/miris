@@ -49,6 +49,8 @@ func init() {
 		},
 	})
 
+	predicates["warsaw"] = Or(predicates["warsawlr"], predicates["warsawtb"], predicates["warsawhw"])
+
 	shibuyaPolys := map[string]common.Polygon{
 		"right": {
 			common.Point{1332, 0},

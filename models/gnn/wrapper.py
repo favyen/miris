@@ -1,15 +1,18 @@
 from discoverlib import geom
 import model
 
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 import graph_nets
 import json
 import numpy
 import math
-import os
 import os.path
 import skimage.io
 import sys
 import tensorflow as tf
+import time
 
 def eprint(s):
 	sys.stderr.write(s + '\n')
@@ -159,36 +162,63 @@ def get_frame_pair(info1, info2):
 	return input_dict, input_crops
 
 eprint('finished loading')
+times = {'read': 0, 'run': 0, 'count': 0}
 while True:
 	line = sys.stdin.readline()
-	parts = line.strip().split(' ')
-	idx1 = int(parts[0])
-	idx2 = int(parts[1])
-	info1 = zip_frame_info(detections[idx1], idx1)
-	info2 = zip_frame_info(detections[idx2], idx2)
-	if len(info1) == 0 or len(info2) == 0:
-		print('')
-		continue
+	if not line:
+		break
+	# list of (idx1, idx2)
+	indices = json.loads(line.strip())
 
-	input_dict, input_crops = get_frame_pair(info1, info2)
-	d1 = graph_nets.utils_tf.get_feed_dict(m.inputs, graph_nets.utils_np.data_dicts_to_graphs_tuple([input_dict]))
-	feed_dict = {
-		m.input_crops: input_crops.astype('float32')/255,
-		m.is_training: False,
-	}
-	feed_dict.update(d1)
-	outputs = session.run(m.outputs, feed_dict=feed_dict)[:, 0]
-	mat = numpy.zeros((len(detections[idx1]), len(detections[idx2])+1), dtype='float32')
-	for i, sender in enumerate(input_dict['senders']):
-		receiver = input_dict['receivers'][i]
-		if sender >= len(info1) or receiver < len(info1):
+	t0 = time.time()
+	frame_infos = {}
+	for frame_t in indices:
+		for frame_idx in frame_t:
+			if frame_idx in frame_infos:
+				continue
+			elif not detections[frame_idx]:
+				frame_infos[frame_idx] = []
+				continue
+			frame_infos[frame_idx] = zip_frame_info(detections[frame_idx], frame_idx)
+
+	t1 = time.time()
+	mats = []
+	for idx1, idx2 in indices:
+		info1 = frame_infos[idx1]
+		info2 = frame_infos[idx2]
+
+		if len(info1) == 0 or len(info2) == 0:
+			mats.append(numpy.zeros((len(info1), len(info2)+1), dtype='float32').tolist())
 			continue
-		_, _, s_idx = info1[sender]
-		if receiver == len(info1):
-			r_idx = len(detections[idx2])
-		else:
-			_, _, r_idx = info2[receiver - len(info1) - 1]
-		mat[s_idx, r_idx] = outputs[i]
 
-	s = json.dumps(mat.tolist())
+		input_dict, input_crops = get_frame_pair(info1, info2)
+		d1 = graph_nets.utils_tf.get_feed_dict(m.inputs, graph_nets.utils_np.data_dicts_to_graphs_tuple([input_dict]))
+		feed_dict = {
+			m.input_crops: input_crops.astype('float32')/255,
+			m.is_training: False,
+		}
+		feed_dict.update(d1)
+		outputs = session.run(m.outputs, feed_dict=feed_dict)[:, 0]
+		mat = numpy.zeros((len(detections[idx1]), len(detections[idx2])+1), dtype='float32')
+		for i, sender in enumerate(input_dict['senders']):
+			receiver = input_dict['receivers'][i]
+			if sender >= len(info1) or receiver < len(info1):
+				continue
+			_, _, s_idx = info1[sender]
+			if receiver == len(info1):
+				r_idx = len(detections[idx2])
+			else:
+				_, _, r_idx = info2[receiver - len(info1) - 1]
+			mat[s_idx, r_idx] = outputs[i]
+
+		mats.append(mat.tolist())
+
+	t2 = time.time()
+	times['read'] += t1-t0
+	times['run'] += t2-t1
+	times['count'] += 1
+	if times['count'] % 128 == 0:
+		eprint(str(times))
+
+	s = json.dumps(mats)
 	oprint(s)

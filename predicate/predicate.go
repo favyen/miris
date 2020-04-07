@@ -26,7 +26,7 @@ func StartEndPredicate(poly1 common.Polygon, poly2 common.Polygon) Predicate {
 // require track to pass through the polygons in any order
 func PointSetPredicate(polygons []common.Polygon) Predicate {
 	return func(tracks [][]miris.Detection) bool {
-		track := tracks[0]
+		track := miris.Densify(tracks[0])
 		for _, poly := range polygons {
 			match := false
 			for _, detection := range track {
@@ -47,7 +47,7 @@ func PointSetPredicate(polygons []common.Polygon) Predicate {
 // track must pass through polygons in order
 func WaypointPredicate(polygons []common.Polygon) Predicate {
 	return func(tracks [][]miris.Detection) bool {
-		track := tracks[0]
+		track := miris.Densify(tracks[0])
 		polyIdx := 0
 		for _, detection := range track {
 			if !polygons[polyIdx].Contains(detection.Bounds().Center()) {

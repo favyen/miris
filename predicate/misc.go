@@ -9,10 +9,11 @@ import (
 
 func init() {
 	predicates["warsaw-brake"] = WarsawBrake
+	predicates["beach-runner"] = BeachRunner
 }
 
 func WarsawBrake(tracks [][]miris.Detection) bool {
-	track := tracks[0]
+	track := miris.Densify(tracks[0])
 	if len(track) == 0 {
 		return false
 	}
@@ -42,6 +43,35 @@ func WarsawBrake(tracks [][]miris.Detection) bool {
 		zeroSpeed := track[zeroIdx].Bounds().Center().Distance(track[i].Bounds().Center())
 		highSpeed := track[highIdx].Bounds().Center().Distance(track[brakeIdx].Bounds().Center())
 		if zeroSpeed < 30 && highSpeed > 200 {
+			return true
+		}
+	}
+	return false
+}
+
+func BeachRunner(tracks [][]miris.Detection) bool {
+	track := miris.Densify(tracks[0])
+	poly := common.Polygon{
+		common.Point{153, 676},
+		common.Point{520, 990},
+		common.Point{1083, 990},
+		common.Point{1369, 640},
+		common.Point{760, 535},
+	}
+	for i, detection := range track {
+		p1 := detection.Bounds().Center()
+		if !poly.Contains(p1) {
+			continue
+		}
+		j := GetPredDistance(track, i, 350)
+		if j == -1 {
+			continue
+		}
+		p2 := track[j].Bounds().Center()
+		if !poly.Contains(p2) {
+			continue
+		}
+		if track[i].FrameIdx - track[j].FrameIdx <= 20 {
 			return true
 		}
 	}

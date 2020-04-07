@@ -37,15 +37,29 @@ func main() {
 			Name: "rnn",
 			Freq: 16,
 			Cfg: map[string]string{
-				"model_path": "/mnt/dji/miris-models/shibuya/filter-rnn16/model_best/model",
+				//"model_path": "/mnt/dji/miris-models/shibuya/filter-rnn16/model_best/model",
+				"model_path": "/home/ubuntu/miris2/logs/16/filter-rnn/model",
+			},
+		}},
+		Refiners: []miris.RefineModel{{
+			Name: "rnn",
+			Freq: 16,
+			Cfg: map[string]string{
+				"model_path": "/home/ubuntu/miris2/logs/16/refine-rnn/model",
 			},
 		}},
 	}
 	if false {
+		var origPlan miris.PlannerConfig
+		miris.ReadJSON("plan.json", &origPlan)
+
 		freq := 16
 		bound := 0.95
-		q := planner.PlanQ(2*freq, bound, ppCfg, modelCfg)
-		filterPlan, refinePlan := planner.PlanFilterRefine(ppCfg, modelCfg, freq, bound)
+		//q := planner.PlanQ(2*freq, bound, ppCfg, modelCfg)
+		q := map[int]float64{
+			1: 1, 2: 1, 4: 1, 8: 1, 16: 1, 32: 0.69,
+		}
+		filterPlan, refinePlan := planner.PlanFilterRefine(ppCfg, modelCfg, freq, bound, &origPlan.Filter)
 		plan := miris.PlannerConfig{
 			Freq: freq,
 			Filter: filterPlan,
@@ -54,14 +68,14 @@ func main() {
 		}
 		log.Println(plan)
 		miris.WriteJSON("plan.json", plan)
+		return
 	}
 
 	var plan miris.PlannerConfig
-	miris.ReadJSON("plan.json", &plan)
-	plan.Q[1] = 1
+	miris.ReadJSON("plan2.json", &plan)
 	execCfg := miris.ExecConfig{
 		DetectionPath: "/data2/youtube/shibuya/json/2-detect-res960.json",
-		FramePath: "/data2/youtube/shibuya/frames/2/",
+		FramePath: "/data2/youtube/shibuya/frames-half/2/",
 		TrackOutput: "/tmp/track.json",
 		FilterOutput: "/tmp/filter.json",
 		UncertaintyOutput: "/tmp/uncertainty.json",

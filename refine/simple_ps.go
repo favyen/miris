@@ -9,7 +9,8 @@ import (
 	"sort"
 )
 
-func GetCoarsePS(freq int, k int, track []miris.Detection) []miris.Detection {
+// Get coarse with all intermediate detections, just missing prefix and suffix.
+func GetCoarsePS(track []miris.Detection, freq int, k int) []miris.Detection {
 	start := -1
 	end := -1
 	for i, detection := range track {
@@ -33,7 +34,7 @@ type SimplePSRefiner struct {
 	freqThreshold int
 }
 
-func MakeSimplePSRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, cfg map[string]string) Refiner {
+func MakeSimplePSRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, modelCfg map[string]string, cfg map[string]string) Refiner {
 	r := &SimplePSRefiner{
 		freq: freq,
 		predFunc: predFunc,
@@ -66,7 +67,7 @@ func (r *SimplePSRefiner) Plan(valTracks [][]miris.Detection, bound float64) map
 		for k := 0; k < r.freq; k++ {
 			freqThreshold := r.freq
 			for {
-				coarse := GetCoarsePS(freqThreshold, k%freqThreshold, track)
+				coarse := GetCoarsePS(track, freqThreshold, k%freqThreshold)
 				if r.predFunc([][]miris.Detection{coarse}) == label {
 					break
 				}
@@ -92,7 +93,7 @@ func (r *SimplePSRefiner) Step(tracks [][]miris.Detection, seen []int) ([]int, [
 	}
 
 	getFreq := func(frameIdx int) int {
-		for _, freq := range []int{16, 8, 4, 2} {
+		for freq := r.freq; freq >= 2; freq /= 2 {
 			if frameIdx % freq == 0 {
 				return freq
 			}
@@ -116,6 +117,9 @@ func (r *SimplePSRefiner) Step(tracks [][]miris.Detection, seen []int) ([]int, [
 	needed := make(map[int]bool)
 	var refined []int
 	for i, track := range tracks {
+		if r.predFunc([][]miris.Detection{track}) {
+			continue
+		}
 		prefixIdx := find(track[0].FrameIdx, -1)
 		suffixIdx := find(track[len(track)-1].FrameIdx, 1)
 		if prefixIdx != -1 {

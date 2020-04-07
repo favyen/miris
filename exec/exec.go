@@ -79,9 +79,9 @@ func Exec(ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig, plan miris.P
 	gnn := gnnlib.NewGNN(gnnPath, execCfg.DetectionPath, execCfg.FramePath, ppCfg.FrameScale)
 	defer gnn.Close()
 
-	r1 := refine.PSRefiners[plan.Refine.PSMethod](plan.Freq, trainTracks, predFunc, plan.Refine.PSCfg)
+	r1 := refine.PSRefiners[plan.Refine.PSMethod](plan.Freq, trainTracks, predFunc, modelCfg.GetRefineCfg(plan.Refine.PSMethod, plan.Freq), plan.Refine.PSCfg)
 	defer r1.Close()
-	r2 := refine.InterpRefiners[plan.Refine.InterpMethod](plan.Freq, trainTracks, predFunc, plan.Refine.InterpCfg)
+	r2 := refine.InterpRefiners[plan.Refine.InterpMethod](plan.Freq, trainTracks, predFunc, modelCfg.GetRefineCfg(plan.Refine.InterpMethod, plan.Freq), plan.Refine.InterpCfg)
 	defer r2.Close()
 	refiners := []refine.Refiner{r1, r2}
 

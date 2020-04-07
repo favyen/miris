@@ -5,8 +5,8 @@ import (
 
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"os/exec"
 	"strconv"
 )
@@ -50,19 +50,38 @@ func (gnn *GNN) NumFrames() int {
 }
 
 func (gnn *GNN) Infer(idx1 int, idx2 int) [][]float64 {
-	input := fmt.Sprintf("%d %d\n", idx1, idx2)
-	if _, err := gnn.stdin.Write([]byte(input)); err != nil {
-		panic(err)
+	return gnn.InferMany([][2]int{{idx1, idx2}}, "")[0]
+}
+
+func (gnn *GNN) InferMany(frames [][2]int, logPrefix string) [][][]float64 {
+	var mats [][][]float64
+	for i := 0; i < len(frames); i += 16 {
+		if logPrefix != "" && i % 128 == 0 {
+			log.Printf(logPrefix + " %d/%d (%d/%d)", frames[i][0], len(gnn.detections), i, len(frames))
+		}
+		end := i+16
+		if end > len(frames) {
+			end = len(frames)
+		}
+		curFrames := frames[i:end]
+		bytes, err := json.Marshal(curFrames)
+		if err != nil {
+			panic(err)
+		}
+		if _, err := gnn.stdin.Write([]byte(string(bytes)+"\n")); err != nil {
+			panic(err)
+		}
+		line, err := gnn.rd.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		var curMats [][][]float64
+		if err := json.Unmarshal([]byte(line), &curMats); err != nil {
+			panic(err)
+		}
+		mats = append(mats, curMats...)
 	}
-	line, err := gnn.rd.ReadString('\n')
-	if err != nil {
-		panic(err)
-	}
-	var mat [][]float64
-	if err := json.Unmarshal([]byte(line), &mat); err != nil {
-		panic(err)
-	}
-	return mat
+	return mats
 }
 
 func (gnn *GNN) Close() {

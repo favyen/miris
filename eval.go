@@ -20,6 +20,7 @@ func midpointFrame(track []miris.Detection) int {
 		d := detection.Bounds().Center().Distance(midpoint)
 		if closestIdx == -1 || d < closestDistance {
 			closestIdx = i
+			closestDistance = d
 		}
 	}
 	return track[closestIdx].FrameIdx
