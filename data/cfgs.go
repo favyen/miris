@@ -19,14 +19,14 @@ func Get(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 
 func GetExec(predName string) (detectionPath string, framePath string) {
 	if predName == "shibuya" || predName == "shibuya-cx" {
-		detectionPath = "/data2/youtube/shibuya/json/2-detect-res960.json"
-		framePath = "/data2/youtube/shibuya/frames-half/2/"
+		detectionPath = "data/shibuya/json/2-detections.json"
+		framePath = "data/shibuya/frames/2/"
 	} else if predName == "warsaw" || predName == "warsaw-brake" {
-		detectionPath = "/data2/youtube/warsaw/json/2-detect-res960.json"
-		framePath = "/data2/youtube/warsaw/frames-half/2/"
+		detectionPath = "data/warsaw/json/2-detections.json"
+		framePath = "data/warsaw/frames/2/"
 	} else if predName == "beach-runner" {
-		detectionPath = "/data2/youtube/beach/json/2-detect-res960.json"
-		framePath = "/data2/youtube/beach/frames-half/2/"
+		detectionPath = "data/beach/json/2-detections.json"
+		framePath = "data/beach/frames/2/"
 	} else {
 		panic(fmt.Errorf("unknown predicate %s", predName))
 	}
@@ -37,8 +37,8 @@ func Shibuya(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	var segments []miris.Segment
 	for _, i := range []int{0, 1, 3, 4, 5} {
 		segments = append(segments, miris.Segment{
-			FramePath: fmt.Sprintf("/data2/youtube/shibuya/frames-half/%d/", i),
-			TrackPath: fmt.Sprintf("/data2/youtube/shibuya/json/%d-track-res960-freq1.json", i),
+			FramePath: fmt.Sprintf("data/shibuya/frames/%d/", i),
+			TrackPath: fmt.Sprintf("data/shibuya/json/%d-baseline.json", i),
 		})
 	}
 
@@ -52,20 +52,20 @@ func Shibuya(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	for freq := 32; freq >= 1; freq /= 2 {
 		modelCfg.GNN = append(modelCfg.GNN, miris.GNNModel{
 			Freq: freq,
-			ModelPath: "/mnt/dji/miris-models/shibuya/m19-skipvar/model_best/model",
+			ModelPath: "logs/shibuya/gnn/model",
 		})
 		modelCfg.Filters = append(modelCfg.Filters, miris.FilterModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/filter-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/filter-rnn/model", predName, freq),
 			},
 		})
 		modelCfg.Refiners = append(modelCfg.Refiners, miris.RefineModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/refine-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/refine-rnn/model", predName, freq),
 			},
 		})
 	}
@@ -76,8 +76,8 @@ func Warsaw(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	var segments []miris.Segment
 	for _, i := range []int{0, 1, 3, 4, 5} {
 		segments = append(segments, miris.Segment{
-			FramePath: fmt.Sprintf("/data2/youtube/warsaw/frames-half/%d/", i),
-			TrackPath: fmt.Sprintf("/data2/youtube/warsaw/json/%d-track-res960-freq1.json", i),
+			FramePath: fmt.Sprintf("data/warsaw/frames/%d/", i),
+			TrackPath: fmt.Sprintf("data/warsaw/json/%d-baseline.json", i),
 		})
 	}
 
@@ -91,20 +91,20 @@ func Warsaw(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	for freq := 32; freq >= 1; freq /= 2 {
 		modelCfg.GNN = append(modelCfg.GNN, miris.GNNModel{
 			Freq: freq,
-			ModelPath: "/mnt/dji/miris-models/warsaw/m19-skipvar/model_best/model",
+			ModelPath: "logs/warsaw/gnn/model",
 		})
 		modelCfg.Filters = append(modelCfg.Filters, miris.FilterModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/filter-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/filter-rnn/model", predName, freq),
 			},
 		})
 		modelCfg.Refiners = append(modelCfg.Refiners, miris.RefineModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/refine-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/refine-rnn/model", predName, freq),
 			},
 		})
 	}
@@ -115,8 +115,8 @@ func Beach(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	var segments []miris.Segment
 	for _, i := range []int{0, 1, 3, 4, 5} {
 		segments = append(segments, miris.Segment{
-			FramePath: fmt.Sprintf("/data2/youtube/beach/frames-half/%d/", i),
-			TrackPath: fmt.Sprintf("/data2/youtube/beach/json/%d-track-res960-freq1.json", i),
+			FramePath: fmt.Sprintf("data/beach/frames/%d/", i),
+			TrackPath: fmt.Sprintf("data/beach/json/%d-track-res960-freq1.json", i),
 		})
 	}
 
@@ -130,20 +130,20 @@ func Beach(predName string) (miris.PreprocessConfig, miris.ModelConfig) {
 	for freq := 32; freq >= 1; freq /= 2 {
 		modelCfg.GNN = append(modelCfg.GNN, miris.GNNModel{
 			Freq: freq,
-			ModelPath: "/mnt/dji/miris-models/beach/m19-skipvar/model_best/model",
+			ModelPath: "logs/beach/gnn/model",
 		})
 		modelCfg.Filters = append(modelCfg.Filters, miris.FilterModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/filter-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/filter-rnn/model", predName, freq),
 			},
 		})
 		modelCfg.Refiners = append(modelCfg.Refiners, miris.RefineModel{
 			Name: "rnn",
 			Freq: freq,
 			Cfg: map[string]string{
-				"model_path": fmt.Sprintf("/home/ubuntu/miris2/logs/%s/%d/refine-rnn/model", predName, freq),
+				"model_path": fmt.Sprintf("logs/%s/%d/refine-rnn/model", predName, freq),
 			},
 		})
 	}
