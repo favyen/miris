@@ -1,4 +1,4 @@
-from discoverlib import geom
+import geom
 import model
 
 import os

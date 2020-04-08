@@ -32,7 +32,7 @@ while True:
 		break
 	tracks = json.loads(line.strip())
 	outputs = []
-	for i in xrange(0, len(tracks), model.BATCH_SIZE):
+	for i in range(0, len(tracks), model.BATCH_SIZE):
 		if i % 1024 == 0:
 			eprint('... {}/{}'.format(i, len(tracks)))
 		batch = tracks[i:i+model.BATCH_SIZE]

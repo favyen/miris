@@ -134,7 +134,7 @@ class Model:
 
 		cur = self.initial_graphs
 		cur = graph_nets.modules.GraphIndependent(edge_model_fn=mlp_model(), node_model_fn=mlp_model())(cur)
-		for i in xrange(4):
+		for i in range(4):
 			cur = graph_nets.modules.InteractionNetwork(mlp_model(), mlp_model())(cur)
 
 		self.pre_outputs = graph_nets.modules.GraphIndependent(edge_model_fn=lambda: sonnet.Linear(1))(cur)

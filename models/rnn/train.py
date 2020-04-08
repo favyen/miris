@@ -32,7 +32,7 @@ num_outputs = len(train_examples[0][2])
 train_true = [t for t in train_examples if any(t[2])]
 train_false = [t for t in train_examples if not any(t[2])]
 def sample_func():
-	return random.sample(train_true, model.BATCH_SIZE/2) + random.sample(train_false, model.BATCH_SIZE/2)
+	return random.sample(train_true, model.BATCH_SIZE//2) + random.sample(train_false, model.BATCH_SIZE//2)
 
 val_true = [t for t in val_examples if any(t[2])]
 val_false = [t for t in val_examples if not any(t[2])]
@@ -40,7 +40,7 @@ num_sel = min(128, len(val_true))
 val_examples = random.sample(val_true, min(num_sel, len(val_true))) + random.sample(val_false, min(num_sel, len(val_false)))
 random.shuffle(val_examples)
 
-print 'initializing model'
+print('initializing model')
 m = model.Model(num_outputs=num_outputs)
 config = tf.ConfigProto(
 	device_count={'GPU': 0}
@@ -48,13 +48,13 @@ config = tf.ConfigProto(
 session = tf.Session(config=config)
 session.run(m.init_op)
 
-print 'begin training'
+print('begin training')
 best_loss = None
 
-for epoch in xrange(9999):
+for epoch in range(9999):
 	start_time = time.time()
 	train_losses = []
-	for _ in xrange(128):
+	for _ in range(128):
 		batch_examples = sample_func()
 		_, loss = session.run([m.optimizer, m.loss], feed_dict={
 			m.is_training: True,
@@ -68,7 +68,7 @@ for epoch in xrange(9999):
 	train_time = time.time()
 
 	val_losses = []
-	for i in xrange(0, len(val_examples), model.BATCH_SIZE):
+	for i in range(0, len(val_examples), model.BATCH_SIZE):
 		batch_examples = val_examples[i:i+model.BATCH_SIZE]
 		loss, outputs = session.run([m.loss, m.outputs], feed_dict={
 			m.is_training: False,
@@ -81,7 +81,7 @@ for epoch in xrange(9999):
 	val_loss = numpy.mean(val_losses)
 	val_time = time.time()
 
-	print 'iteration {}: train_time={}, val_time={}, train_loss={}, val_loss={}/{}'.format(epoch, int(train_time - start_time), int(val_time - train_time), train_loss, val_loss, best_loss)
+	print('iteration {}: train_time={}, val_time={}, train_loss={}, val_loss={}/{}'.format(epoch, int(train_time - start_time), int(val_time - train_time), train_loss, val_loss, best_loss))
 
 	if best_loss is None or val_loss < best_loss:
 		best_loss = val_loss
