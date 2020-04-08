@@ -2,7 +2,7 @@ MIRIS: Fast Object Track Queries in Video
 =========================================
 
 This is the implementation of the MIRIS query-driven tracking approach proposed
-in "MIRIS: Fast Object Track Queries in Video" (SIGMOD 2020).
+in ["MIRIS: Fast Object Track Queries in Video" (SIGMOD 2020)](https://favyen.com/miris/).
 
 MIRIS is a query processing engine for large video datasets. It optimizes
 queries with object track predicates, i.e., predicates evaluated over the
@@ -45,7 +45,7 @@ each dataset directory, there are three directories, for example:
   tracking algorithm for the training and validation video segments. Also
   contains the object detections in the test segment. In a real system the
   object detector should be run on-the-fly.
-* data/beach/videos: the original videos from the zip file, you can delet it
+* data/beach/videos: the original videos from the zip file, you can delete it
   after running `data/extract.py`.
 
 The JPG files must be numbered like 000001.jpg, 000002.jpg, etc. The object
@@ -75,8 +75,9 @@ the paper) at 10/16 fps (i.e., looking at one in every 16 frames), we would:
 	python train.py ../../logs/shibuya/16/refine_rnn_ds.json ../../logs/shibuya/16/refine-rnn/model
 
 The following query choices are supported: uav (Q1), shibuya (Q2), warsaw (Q3),
-beach-runner (Q6), and warsaw-brake (Q7). Q1 and Q4 involve other video data
-sources that need to be obtained separately.
+shibuya-crosswalk (Q5), beach-runner (Q6), and warsaw-brake (Q7). Q4 involves a
+different video data source (Berkeley DeepDrive) that needs to be obtained
+separately.
 
 
 Planning
@@ -105,8 +106,8 @@ Once we have the plan file, we can execute MIRIS over a large dataset:
 
 This produces several intermediate outputs in `logs/shibuya/16/0.9/`, which the
 implementation will reuse on future runs in case an error happens. (If you
-change something, you may need to delete these intermediates.) The final output
-object tracks are produced at `logs/shibuya/16/0.9/final.json`.
+change something and want to re-execute, you may need to delete these
+intermediates.) The final output object tracks are produced at `logs/shibuya/16/0.9/final.json`.
 
 
 Evaluation
