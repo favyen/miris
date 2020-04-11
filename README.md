@@ -25,8 +25,8 @@ preparation.
 Preparing Data
 --------------
 
-The YTStream dataset from the paper includes three of the sources of video data
-used in the paper: Tokyo, Warsaw, and Resort. More details on the dataset  are
+The YTStream dataset from the paper includes four of the sources of video data
+used in the paper: UAV, Tokyo, Warsaw, and Resort. More details on the dataset are
 available at https://favyen.com/miris/.
 
 To get started:

@@ -122,7 +122,7 @@ class Model:
 		self.layer4 = self._conv_layer('layer4', self.layer3, 2, 64, 64) # -> 4x4x64
 		self.layer5 = self._conv_layer('layer5', self.layer4, 2, 64, 64) # -> 2x2x64
 		self.layer6 = self._conv_layer('layer6', self.layer5, 2, 64, 64)[:, 0, 0, :]
-		self.initial_graphs = self.inputs.replace(nodes=tf.concat([self.inputs.nodes[:, 0:7], self.layer6], axis=1))
+		self.initial_graphs = self.inputs.replace(nodes=tf.concat([self.inputs.nodes[:, 0:8], self.layer6], axis=1))
 
 		def mlp_model(n=64):
 			def f():

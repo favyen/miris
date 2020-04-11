@@ -40,7 +40,7 @@ CROP_SIZE = 64
 eprint('initializing model')
 input_example = {
 	'globals': [],
-	'nodes': [[1.0] * (7+64), [1.0] * (7+64)],
+	'nodes': [[1.0] * (8+64), [1.0] * (8+64)],
 	'edges': [[1.0] * 6, [1.0] * 6],
 	'senders': [0, 1],
 	'receivers': [1, 0],
@@ -95,7 +95,7 @@ def get_loc(detection):
 	cy = float(cy) / ORIG_HEIGHT
 	return cx, cy
 
-def get_frame_pair(info1, info2):
+def get_frame_pair(info1, info2, skip):
 	senders = []
 	receivers = []
 	input_nodes = []
@@ -105,13 +105,13 @@ def get_frame_pair(info1, info2):
 	for i, t in enumerate(info1):
 		detection, crop, _ = t
 		cx, cy = get_loc(detection)
-		input_nodes.append([cx, cy, detection['width'], detection['height'], 1, 0, 0] + [0.0]*64)
+		input_nodes.append([cx, cy, detection['width'], detection['height'], 1, 0, 0, skip/50.0] + [0.0]*64)
 		input_crops[i, :, :, :] = crop
 	input_nodes.append([0.5, 0.5, 0, 0, 0, 1, 0] + [0.0]*64)
 	for i, t in enumerate(info2):
 		detection, crop, _ = t
 		cx, cy = get_loc(detection)
-		input_nodes.append([cx, cy, detection['width'], detection['height'], 0, 0, 1] + [0.0]*64)
+		input_nodes.append([cx, cy, detection['width'], detection['height'], 0, 0, 1, skip/50.0] + [0.0]*64)
 		input_crops[len(info1)+1+i, :, :, :] = crop
 
 	for i, t1 in enumerate(info1):
@@ -191,7 +191,7 @@ while True:
 			mats.append(numpy.zeros((len(info1), len(info2)+1), dtype='float32').tolist())
 			continue
 
-		input_dict, input_crops = get_frame_pair(info1, info2)
+		input_dict, input_crops = get_frame_pair(info1, info2, idx2-idx1)
 		d1 = graph_nets.utils_tf.get_feed_dict(m.inputs, graph_nets.utils_np.data_dicts_to_graphs_tuple([input_dict]))
 		feed_dict = {
 			m.input_crops: input_crops.astype('float32')/255,

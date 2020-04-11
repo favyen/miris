@@ -20,10 +20,16 @@ ORIG_HEIGHT = 1080
 MODEL_PATH = '../../logs/' + dataset + '/gnn/model'
 FRAME_PATH = '../../data/' + dataset + '/frames/{}/'
 DETECTION_PATH = '../../data/' + dataset + '/json/{}-baseline.json'
-LOAD_SKIP = 4
 SKIP = lambda: random.sample([1, 2, 4, 8, 16, 32], 1)
 FRAME_SCALE = 2
 CROP_SIZE = 64
+
+if dataset == 'uav':
+	LABELS = ['0006', '0007', '0008', '0009', '0011']
+	LOAD_SKIP = 1
+else:
+	LABELS = ['0', '1', '3', '4', '5']
+	LOAD_SKIP = 4
 
 def get_frame_fname(frame_idx):
 	s = str(frame_idx)
@@ -179,7 +185,7 @@ def get_frame_pair(info1, info2, skip):
 
 all_pairs = []
 
-for label in ['0', '1', '3', '4', '5']:
+for label in LABELS:
 	detection_path = DETECTION_PATH.format(label)
 	print('reading from {}'.format(detection_path))
 	with open(detection_path, 'r') as f:
@@ -215,8 +221,14 @@ for label in ['0', '1', '3', '4', '5']:
 
 random.shuffle(all_pairs)
 num_val = min(1024, len(all_pairs)//10)
-val_pairs = [pair for pair in all_pairs if pair[4] <= 2000]
-train_pairs = [pair for pair in all_pairs if pair[4] > 2000]
+
+if dataset == 'uav':
+	all_pairs = [pair for pair in all_pairs if pair[3] != '0011' or pair[4] < 3200]
+	val_pairs = [pair for pair in all_pairs if pair[3] == '0008' and pair[4] > 3200][0:1024]
+	train_pairs = [pair for pair in all_pairs if pair[3] != '0008' or pair[4] <= 3200]
+else:
+	val_pairs = [pair for pair in all_pairs if pair[4] <= 2000]
+	train_pairs = [pair for pair in all_pairs if pair[4] > 2000]
 
 print('initializing model')
 m = model.Model([[val_pairs[0][0]], [val_pairs[0][1]]])
