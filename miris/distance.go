@@ -2,7 +2,6 @@ package miris
 
 import (
 	"github.com/mitroadmaps/gomapinfer/common"
-	"github.com/mitroadmaps/gomapinfer/spmetric"
 )
 
 func SamplePoints(track []Detection) []common.Point {
@@ -105,10 +104,4 @@ func TrackDistance(track1 []Detection, track2 []Detection) float64 {
 	}
 
 	return maxDistance
-}
-
-func FrechetDistance(track1 []Detection, track2 []Detection) float64 {
-	points1 := SamplePoints(track1)
-	points2 := SamplePoints(track2)
-	return spmetric.ComputeFrechetDistance(points1, points2)
 }
