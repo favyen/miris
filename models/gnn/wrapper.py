@@ -107,7 +107,7 @@ def get_frame_pair(info1, info2, skip):
 		cx, cy = get_loc(detection)
 		input_nodes.append([cx, cy, detection['width'], detection['height'], 1, 0, 0, skip/50.0] + [0.0]*64)
 		input_crops[i, :, :, :] = crop
-	input_nodes.append([0.5, 0.5, 0, 0, 0, 1, 0] + [0.0]*64)
+	input_nodes.append([0.5, 0.5, 0, 0, 0, 1, 0, skip/50.0] + [0.0]*64)
 	for i, t in enumerate(info2):
 		detection, crop, _ = t
 		cx, cy = get_loc(detection)
