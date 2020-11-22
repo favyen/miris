@@ -1,18 +1,18 @@
 package gnn
 
 import (
-	"../miris"
+	"github.com/favyen/miris/miris"
 
 	"fmt"
 	"sort"
 )
 
 type Edge struct {
-	LeftFrame int
-	LeftIdx int
+	LeftFrame  int
+	LeftIdx    int
 	RightFrame int
-	RightIdx int
-	Score float64
+	RightIdx   int
+	Score      float64
 }
 
 func GetEdgeMaps(edges []Edge) (map[[2]int][]Edge, map[[2]int][]Edge) {
@@ -46,14 +46,14 @@ func (gnn *GNN) Update(edges []Edge, frames [][2]int, q map[int]float64) []Edge 
 	for i, frameSpec := range frames {
 		idx1 := frameSpec[0]
 		freq := frameSpec[1]
-		frameInferList[i] = [2]int{idx1, idx1+freq}
+		frameInferList[i] = [2]int{idx1, idx1 + freq}
 	}
 	mats := gnn.InferMany(frameInferList, "[gnn-update]")
 
 	for i, frameSpec := range frames {
 		idx1 := frameSpec[0]
 		freq := frameSpec[1]
-		idx2 := idx1+freq
+		idx2 := idx1 + freq
 		mat := mats[i]
 		if q[freq] == 0 {
 			panic(fmt.Errorf("gnn update got freq %d without q on frames (%d,%d)", freq, idx1, idx2))
@@ -308,7 +308,7 @@ func (gnn *GNN) GetUncertainFrames(components [][]Edge, seen []int) []int {
 			if next == -1 || next-lk[0] <= 1 {
 				panic(fmt.Errorf("issue finding frame for uncertain edge"))
 			}
-			mid := (lk[0]+next)/2
+			mid := (lk[0] + next) / 2
 			frameSet[mid] = true
 		}
 		for rk, group := range rightMap {
@@ -319,7 +319,7 @@ func (gnn *GNN) GetUncertainFrames(components [][]Edge, seen []int) []int {
 			if prev == -1 || rk[0]-prev <= 1 {
 				panic(fmt.Errorf("issue finding frame for uncertain edge"))
 			}
-			mid := (prev+rk[0])/2
+			mid := (prev + rk[0]) / 2
 			frameSet[mid] = true
 		}
 	}

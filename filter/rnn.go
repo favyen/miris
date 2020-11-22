@@ -1,8 +1,8 @@
 package filter
 
 import (
-	"../miris"
-	rnnlib "../models/rnn"
+	"github.com/favyen/miris/miris"
+	rnnlib "github.com/favyen/miris/models/rnn"
 )
 
 func init() {

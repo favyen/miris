@@ -1,28 +1,28 @@
 package refine
 
 import (
-	"../miris"
-	"../predicate"
-	rnnlib "../models/rnn"
+	"github.com/favyen/miris/miris"
+	rnnlib "github.com/favyen/miris/models/rnn"
+	"github.com/favyen/miris/predicate"
 
 	"fmt"
-	"strconv"
 	"sort"
+	"strconv"
 )
 
 type RNNPSRefiner struct {
-	freq int
-	predFunc predicate.Predicate
-	model rnnlib.Model
+	freq      int
+	predFunc  predicate.Predicate
+	model     rnnlib.Model
 	threshold float64
 }
 
 func MakeRNNPSRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, modelCfg map[string]string, cfg map[string]string) Refiner {
 	model := rnnlib.MakeModel(2, modelCfg["model_path"])
 	r := &RNNPSRefiner{
-		freq: freq,
+		freq:     freq,
 		predFunc: predFunc,
-		model: model,
+		model:    model,
 	}
 	if cfg["threshold"] != "" {
 		var err error
@@ -40,12 +40,12 @@ func init() {
 
 func (r *RNNPSRefiner) Plan(valTracks [][]miris.Detection, bound float64) map[string]string {
 	type Example struct {
-		Coarse []miris.Detection
+		Coarse   []miris.Detection
 		Original map[int]miris.Detection
-		Debug []miris.Detection
-		MaxT float64
-		PFreq int
-		SFreq int
+		Debug    []miris.Detection
+		MaxT     float64
+		PFreq    int
+		SFreq    int
 	}
 
 	removeFakes := func(coarse []miris.Detection) []miris.Detection {
@@ -81,12 +81,12 @@ func (r *RNNPSRefiner) Plan(valTracks [][]miris.Detection, bound float64) map[st
 				continue
 			}
 			remaining = append(remaining, Example{
-				Coarse: coarse,
+				Coarse:   coarse,
 				Original: frameToDetection,
-				MaxT: 1,
-				PFreq: r.freq/2,
-				SFreq: r.freq/2,
-				Debug: track,
+				MaxT:     1,
+				PFreq:    r.freq / 2,
+				SFreq:    r.freq / 2,
+				Debug:    track,
 			})
 		}
 	}
@@ -171,7 +171,7 @@ func (r *RNNPSRefiner) Step(tracks [][]miris.Detection, seen []int) ([]int, []in
 
 	getFreq := func(frameIdx int) int {
 		for freq := r.freq; freq >= 2; freq /= 2 {
-			if frameIdx % freq == 0 {
+			if frameIdx%freq == 0 {
 				return freq
 			}
 		}
@@ -188,7 +188,7 @@ func (r *RNNPSRefiner) Step(tracks [][]miris.Detection, seen []int) ([]int, []in
 		// add fake detections to prefix/suffix if the track is missing in those frames
 		curFrames := [2]int{-1, -1}
 		pFreq := getFreq(track[0].FrameIdx)
-		for freq := pFreq/2; freq >= 1; freq /= 2 {
+		for freq := pFreq / 2; freq >= 1; freq /= 2 {
 			frameIdx := track[0].FrameIdx - freq
 			if !seenSet[frameIdx] {
 				curFrames[0] = frameIdx
@@ -198,7 +198,7 @@ func (r *RNNPSRefiner) Step(tracks [][]miris.Detection, seen []int) ([]int, []in
 			track = append([]miris.Detection{fake}, track...)
 		}
 		sFreq := getFreq(track[len(track)-1].FrameIdx)
-		for freq := sFreq/2; freq >= 1; freq /= 2 {
+		for freq := sFreq / 2; freq >= 1; freq /= 2 {
 			frameIdx := track[len(track)-1].FrameIdx + freq
 			if !seenSet[frameIdx] {
 				curFrames[1] = frameIdx

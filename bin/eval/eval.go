@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./miris"
-	"./predicate"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"fmt"
 	"io/ioutil"
@@ -107,9 +107,9 @@ func main() {
 
 	var precision, recall, f1 float64
 	if tp > 0 {
-		precision = float64(tp)/float64(tp+fp)
-		recall = float64(tp)/float64(tp+fn)
-		f1 = 2/(1/precision+1/recall)
+		precision = float64(tp) / float64(tp+fp)
+		recall = float64(tp) / float64(tp+fn)
+		f1 = 2 / (1/precision + 1/recall)
 	}
 	fmt.Printf("p=%v, r=%v, f=%v\n", precision, recall, f1)
 }
