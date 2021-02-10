@@ -1,11 +1,11 @@
 package exec
 
 import (
-	filterlib "../filter"
-	gnnlib "../gnn"
-	"../miris"
-	"../predicate"
-	"../refine"
+	filterlib "github.com/favyen/miris/filter"
+	gnnlib "github.com/favyen/miris/gnn"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
+	"github.com/favyen/miris/refine"
 
 	"log"
 	"os"
@@ -28,8 +28,8 @@ func getNeededSpecs(needed []int, seenFrames map[int]bool, maxFrame int) [][2]in
 				idx2 = seenIdx
 			}
 		}
-		freq1 := frameIdx-idx1
-		freq2 := idx2-frameIdx
+		freq1 := frameIdx - idx1
+		freq2 := idx2 - frameIdx
 		frames = append(frames, [2]int{idx1, freq1})
 		frames = append(frames, [2]int{frameIdx, freq2})
 	}
@@ -42,7 +42,7 @@ func getNeededSpecs(needed []int, seenFrames map[int]bool, maxFrame int) [][2]in
 
 type GraphWithSeen struct {
 	Graph []gnnlib.Edge
-	Seen map[int]bool
+	Seen  map[int]bool
 }
 
 func ReadGraphAndSeen(fname string) ([]gnnlib.Edge, map[int]bool) {
@@ -90,7 +90,7 @@ func Exec(ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig, plan miris.P
 	if _, err := os.Stat(execCfg.TrackOutput); err != nil {
 		log.Printf("[exec] run initial tracking")
 
-		for _, freq := range []int{2*plan.Freq, plan.Freq} {
+		for _, freq := range []int{2 * plan.Freq, plan.Freq} {
 			var frames [][2]int
 			for frameIdx := 0; frameIdx < gnn.NumFrames()-freq; frameIdx += freq {
 				frames = append(frames, [2]int{frameIdx, freq})
@@ -105,7 +105,7 @@ func Exec(ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig, plan miris.P
 		graph, seenFrames = ReadGraphAndSeen(execCfg.TrackOutput)
 	}
 	log.Printf("[exec] ... tracking yields graph with %d edges (seen %d frames)", len(graph), len(seenFrames))
-	maxFrame := ((gnn.NumFrames()-1)/plan.Freq)*plan.Freq
+	maxFrame := ((gnn.NumFrames() - 1) / plan.Freq) * plan.Freq
 
 	// now filter the components
 	var components [][]gnnlib.Edge
@@ -240,7 +240,7 @@ func Exec(ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig, plan miris.P
 	for _, comp := range components {
 		for _, track := range gnn.SampleComponent(comp) {
 			for i := range track {
-				track[i].TrackID = len(tracks)+1
+				track[i].TrackID = len(tracks) + 1
 			}
 			tracks = append(tracks, track)
 		}

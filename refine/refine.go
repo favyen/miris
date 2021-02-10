@@ -1,8 +1,8 @@
 package refine
 
 import (
-	"../miris"
-	"../predicate"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"log"
 )
@@ -29,7 +29,7 @@ func incorporate(tracks map[int][]miris.Detection, detections []miris.Detection)
 		insertIdx := 0
 		for i, d := range track {
 			if d.FrameIdx < detection.FrameIdx {
-				insertIdx = i+1
+				insertIdx = i + 1
 			}
 		}
 		var newTrack []miris.Detection

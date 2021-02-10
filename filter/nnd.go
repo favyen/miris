@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"../miris"
+	"github.com/favyen/miris/miris"
 
 	"log"
 )
@@ -49,7 +49,7 @@ func (nnd NNDFilter) Predict(tracks [][]miris.Detection) []float64 {
 		}()
 	}
 	for i := range tracks {
-		if i % 1000 == 0 {
+		if i%1000 == 0 {
 			log.Printf("[filter-nnd] ... %d/%d", i, len(tracks))
 		}
 		ch <- i
@@ -57,7 +57,7 @@ func (nnd NNDFilter) Predict(tracks [][]miris.Detection) []float64 {
 	close(ch)
 	scores := make([]float64, len(tracks))
 	for i := 0; i < Threads; i++ {
-		m := <- donech
+		m := <-donech
 		for idx, score := range m {
 			scores[idx] = score
 		}

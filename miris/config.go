@@ -11,32 +11,32 @@ type Segment struct {
 
 type PreprocessConfig struct {
 	TrainSegments []Segment
-	ValSegments []Segment
-	Predicate string
-	FrameScale int
+	ValSegments   []Segment
+	Predicate     string
+	FrameScale    int
 }
 
 type FilterModel struct {
 	Name string
 	Freq int
-	Cfg map[string]string
+	Cfg  map[string]string
 }
 
 type RefineModel struct {
 	Name string
 	Freq int
-	Cfg map[string]string
+	Cfg  map[string]string
 }
 
 type GNNModel struct {
-	Freq int
+	Freq      int
 	ModelPath string
 }
 
 type ModelConfig struct {
-	Filters []FilterModel
+	Filters  []FilterModel
 	Refiners []RefineModel
-	GNN []GNNModel
+	GNN      []GNNModel
 }
 
 func (cfg ModelConfig) GetFilterCfg(name string, freq int) map[string]string {
@@ -69,32 +69,32 @@ func (cfg ModelConfig) GetGNN(freq int) GNNModel {
 }
 
 type FilterPlan struct {
-	Name string
+	Name      string
 	Threshold float64
 }
 
 type RefinePlan struct {
-	PSMethod string
-	PSCfg map[string]string
+	PSMethod     string
+	PSCfg        map[string]string
 	InterpMethod string
-	InterpCfg map[string]string
+	InterpCfg    map[string]string
 }
 
 type PlannerConfig struct {
-	Freq int
-	Bound float64
-	Filter FilterPlan
+	Freq     int
+	Bound    float64
+	Filter   FilterPlan
 	QSamples map[int][]float64
-	Q map[int]float64
-	Refine RefinePlan
+	Q        map[int]float64
+	Refine   RefinePlan
 }
 
 type ExecConfig struct {
-	DetectionPath string
-	FramePath string
-	TrackOutput string
-	FilterOutput string
+	DetectionPath     string
+	FramePath         string
+	TrackOutput       string
+	FilterOutput      string
 	UncertaintyOutput string
-	RefineOutput string
-	OutPath string
+	RefineOutput      string
+	OutPath           string
 }

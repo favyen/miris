@@ -3,7 +3,7 @@ package predicate
 // miscellaneous queries
 
 import (
-	"../miris"
+	"github.com/favyen/miris/miris"
 	"github.com/mitroadmaps/gomapinfer/common"
 )
 
@@ -30,7 +30,6 @@ func WarsawBrake(tracks [][]miris.Detection) bool {
 	if !rect1.Contains(track[0].Bounds().Center()) || !rect2.Contains(track[len(track)-1].Bounds().Center()) {
 		return false
 	}
-
 
 	// need to have hard braking: high speed in 5 frames, then 5 frames, then zero in 5 frames
 	// high speed = 300 px / 5 frames, zero = 30 px / 5 frames
@@ -72,7 +71,7 @@ func BeachRunner(tracks [][]miris.Detection) bool {
 		if !poly.Contains(p2) {
 			continue
 		}
-		if track[i].FrameIdx - track[j].FrameIdx <= 20 {
+		if track[i].FrameIdx-track[j].FrameIdx <= 20 {
 			return true
 		}
 	}

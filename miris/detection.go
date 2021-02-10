@@ -9,13 +9,13 @@ import (
 )
 
 type Detection struct {
-	FrameIdx int `json:"frame_idx"`
-	TrackID int `json:"track_id"`
-	Left int `json:"left"`
-	Top int `json:"top"`
-	Right int `json:"right"`
-	Bottom int `json:"bottom"`
-	Score float64 `json:"score,omitempty"`
+	FrameIdx int     `json:"frame_idx"`
+	TrackID  int     `json:"track_id"`
+	Left     int     `json:"left"`
+	Top      int     `json:"top"`
+	Right    int     `json:"right"`
+	Bottom   int     `json:"bottom"`
+	Score    float64 `json:"score,omitempty"`
 }
 
 func (d Detection) Bounds() common.Rectangle {
@@ -30,15 +30,15 @@ func (d Detection) Equals(other Detection) bool {
 }
 
 func Interpolate(a Detection, b Detection, frameIdx int) Detection {
-	factor := float64(frameIdx - a.FrameIdx) / float64(b.FrameIdx - a.FrameIdx)
+	factor := float64(frameIdx-a.FrameIdx) / float64(b.FrameIdx-a.FrameIdx)
 	d := Detection{
 		FrameIdx: frameIdx,
-		TrackID: a.TrackID,
+		TrackID:  a.TrackID,
 	}
-	d.Left = int(factor * float64(b.Left - a.Left)) + a.Left
-	d.Top = int(factor * float64(b.Top - a.Top)) + a.Top
-	d.Right = int(factor * float64(b.Right - a.Right)) + a.Right
-	d.Bottom = int(factor * float64(b.Bottom - a.Bottom)) + a.Bottom
+	d.Left = int(factor*float64(b.Left-a.Left)) + a.Left
+	d.Top = int(factor*float64(b.Top-a.Top)) + a.Top
+	d.Right = int(factor*float64(b.Right-a.Right)) + a.Right
+	d.Bottom = int(factor*float64(b.Bottom-a.Bottom)) + a.Bottom
 	return d
 }
 
@@ -46,7 +46,7 @@ func Densify(track []Detection) []Detection {
 	var denseTrack []Detection
 	for _, detection := range track {
 		if len(denseTrack) > 0 {
-			prev := denseTrack[len(denseTrack) - 1]
+			prev := denseTrack[len(denseTrack)-1]
 			for frameIdx := prev.FrameIdx + 1; frameIdx < detection.FrameIdx; frameIdx++ {
 				denseTrack = append(denseTrack, Interpolate(prev, detection, frameIdx))
 			}
@@ -70,7 +70,7 @@ func DensifyAt(track []Detection, indexes []int) []Detection {
 	var denseTrack []Detection
 	for _, detection := range track {
 		if len(denseTrack) > 0 {
-			prev := denseTrack[len(denseTrack) - 1]
+			prev := denseTrack[len(denseTrack)-1]
 			for frameIdx := prev.FrameIdx + 1; frameIdx < detection.FrameIdx; frameIdx++ {
 				if !relevant[frameIdx] {
 					continue
@@ -84,6 +84,7 @@ func DensifyAt(track []Detection, indexes []int) []Detection {
 }
 
 type FeatureVector [64]float64
+
 func (v1 FeatureVector) Distance(v2 FeatureVector) float64 {
 	var d float64 = 0
 	for i := 0; i < len(v1); i++ {
@@ -97,10 +98,11 @@ type ActionVectorJSON struct {
 	Y float64 `json:"y"`
 	P float64 `json:"p"`
 }
+
 func (v ActionVectorJSON) ActionVector() ActionVector {
 	return ActionVector{
 		Displacement: common.Point{v.X, v.Y},
-		Probability: v.P,
+		Probability:  v.P,
 	}
 }
 
@@ -180,7 +182,7 @@ func CountDetections(detections [][]Detection) int {
 func GetCoarse(track []Detection, freq int, k int) []Detection {
 	var coarse []Detection
 	for _, detection := range track {
-		if detection.FrameIdx % freq != k {
+		if detection.FrameIdx%freq != k {
 			continue
 		}
 		coarse = append(coarse, detection)

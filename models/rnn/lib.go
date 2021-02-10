@@ -1,8 +1,8 @@
 package rnn
 
 import (
-	"../../miris"
-	"../../predicate"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"bufio"
 	"encoding/json"
@@ -16,12 +16,12 @@ import (
 
 type Item struct {
 	Track []miris.Detection `json:"track"`
-	Label []int `json:"label"`
+	Label []int             `json:"label"`
 }
 
 type DS struct {
 	Train []Item `json:"train"`
-	Val []Item `json:"val"`
+	Val   []Item `json:"val"`
 }
 
 func boolToInt(b []bool) []int {
@@ -35,9 +35,9 @@ func boolToInt(b []bool) []int {
 }
 
 type Model struct {
-	cmd *exec.Cmd
+	cmd   *exec.Cmd
 	stdin io.WriteCloser
-	rd *bufio.Reader
+	rd    *bufio.Reader
 }
 
 func MakeModel(numOutputs int, modelPath string) Model {
@@ -51,7 +51,7 @@ func (m Model) Infer(tracks [][]miris.Detection) [][]float64 {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := m.stdin.Write([]byte(string(bytes)+"\n")); err != nil {
+	if _, err := m.stdin.Write([]byte(string(bytes) + "\n")); err != nil {
 		panic(err)
 	}
 	line, err := m.rd.ReadString('\n')
@@ -88,7 +88,7 @@ func GetCoarsePSRefine(track []miris.Detection, freq int, pFreq int, sFreq int, 
 	frameToDetection := make(map[int]miris.Detection)
 	for i, detection := range track {
 		frameToDetection[detection.FrameIdx] = detection
-		if detection.FrameIdx % freq != k {
+		if detection.FrameIdx%freq != k {
 			continue
 		}
 		coarse = append(coarse, detection)
@@ -105,7 +105,7 @@ func GetCoarsePSRefine(track []miris.Detection, freq int, pFreq int, sFreq int, 
 		coarse = append([]miris.Detection{}, track[start:end+1]...)
 	}
 	var fakes []miris.Detection
-	for x := freq/2; x >= pFreq; x /= 2 {
+	for x := freq / 2; x >= pFreq; x /= 2 {
 		frameIdx := coarse[0].FrameIdx - x
 		detection, ok := frameToDetection[frameIdx]
 		if ok {
@@ -113,15 +113,15 @@ func GetCoarsePSRefine(track []miris.Detection, freq int, pFreq int, sFreq int, 
 		} else {
 			fake := miris.Detection{
 				FrameIdx: frameIdx,
-				Left: 0,
-				Top: 0,
-				Right: 0,
-				Bottom: 0,
+				Left:     0,
+				Top:      0,
+				Right:    0,
+				Bottom:   0,
 			}
 			fakes = append(fakes, fake)
 		}
 	}
-	for x := freq/2; x >= sFreq; x /= 2 {
+	for x := freq / 2; x >= sFreq; x /= 2 {
 		frameIdx := coarse[len(coarse)-1].FrameIdx + x
 		detection, ok := frameToDetection[frameIdx]
 		if ok {
@@ -129,10 +129,10 @@ func GetCoarsePSRefine(track []miris.Detection, freq int, pFreq int, sFreq int, 
 		} else {
 			fake := miris.Detection{
 				FrameIdx: frameIdx,
-				Left: 0,
-				Top: 0,
-				Right: 0,
-				Bottom: 0,
+				Left:     0,
+				Top:      0,
+				Right:    0,
+				Bottom:   0,
 			}
 			fakes = append(fakes, fake)
 		}
@@ -172,8 +172,8 @@ func ItemsFromSegments(segments []miris.Segment, freq int, predFunc predicate.Pr
 		freqList = append(freqList, x)
 	}
 
-	coarsePerTrueTrack := 1+(50000/numTrue)
-	coarsePerFalseTrack := 1+(50000/numFalse)
+	coarsePerTrueTrack := 1 + (50000 / numTrue)
+	coarsePerFalseTrack := 1 + (50000 / numFalse)
 	log.Printf("[prepare] compute coarse tracks (max true=%d false=%d per track with %d tracks)", coarsePerTrueTrack, coarsePerFalseTrack, len(tracks))
 	var filterItems, refineItems []Item
 	for i, track := range tracks {

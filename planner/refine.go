@@ -1,9 +1,9 @@
 package planner
 
 import (
-	"../filter"
-	"../miris"
-	"../refine"
+	"github.com/favyen/miris/filter"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/refine"
 
 	"log"
 )
@@ -77,9 +77,9 @@ func PlanRefine(context plannerContext, filterPlan miris.FilterPlan) miris.Refin
 	}
 	log.Printf("[plan-refine] decided to use (%s, %s)", bestNames[0], bestNames[1])
 	return miris.RefinePlan{
-		PSMethod: bestNames[0],
-		PSCfg: refinerConfigs[bestNames[0]],
+		PSMethod:     bestNames[0],
+		PSCfg:        refinerConfigs[bestNames[0]],
 		InterpMethod: bestNames[1],
-		InterpCfg: refinerConfigs[bestNames[1]],
+		InterpCfg:    refinerConfigs[bestNames[1]],
 	}
 }

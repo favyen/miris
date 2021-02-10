@@ -1,7 +1,7 @@
 package gnn
 
 import (
-	"../miris"
+	"github.com/favyen/miris/miris"
 
 	"bufio"
 	"encoding/json"
@@ -12,9 +12,9 @@ import (
 )
 
 type GNN struct {
-	cmd *exec.Cmd
-	stdin io.WriteCloser
-	rd *bufio.Reader
+	cmd        *exec.Cmd
+	stdin      io.WriteCloser
+	rd         *bufio.Reader
 	detections [][]miris.Detection
 }
 
@@ -56,10 +56,10 @@ func (gnn *GNN) Infer(idx1 int, idx2 int) [][]float64 {
 func (gnn *GNN) InferMany(frames [][2]int, logPrefix string) [][][]float64 {
 	var mats [][][]float64
 	for i := 0; i < len(frames); i += 16 {
-		if logPrefix != "" && i % 128 == 0 {
-			log.Printf(logPrefix + " %d/%d (%d/%d)", frames[i][0], len(gnn.detections), i, len(frames))
+		if logPrefix != "" && i%128 == 0 {
+			log.Printf(logPrefix+" %d/%d (%d/%d)", frames[i][0], len(gnn.detections), i, len(frames))
 		}
-		end := i+16
+		end := i + 16
 		if end > len(frames) {
 			end = len(frames)
 		}
@@ -68,7 +68,7 @@ func (gnn *GNN) InferMany(frames [][2]int, logPrefix string) [][][]float64 {
 		if err != nil {
 			panic(err)
 		}
-		if _, err := gnn.stdin.Write([]byte(string(bytes)+"\n")); err != nil {
+		if _, err := gnn.stdin.Write([]byte(string(bytes) + "\n")); err != nil {
 			panic(err)
 		}
 		line, err := gnn.rd.ReadString('\n')

@@ -1,9 +1,9 @@
 package planner
 
 import (
-	"../gnn"
-	"../miris"
-	"../predicate"
+	"github.com/favyen/miris/gnn"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"fmt"
 	"log"
@@ -45,7 +45,7 @@ func GetQSamplesSegment(ppCfg miris.PreprocessConfig, segment miris.Segment, fre
 
 	var frames [][2]int
 	for frameIdx := 0; frameIdx < len(detections)-freq; frameIdx += freq {
-		frames = append(frames, [2]int{frameIdx, frameIdx+freq})
+		frames = append(frames, [2]int{frameIdx, frameIdx + freq})
 	}
 	mats := model.InferMany(frames, fmt.Sprintf("[plan-q] [%s @ %d]", segment.FramePath, freq))
 	for counter, mat := range mats {
@@ -88,14 +88,14 @@ func GetQSamplesSegment(ppCfg miris.PreprocessConfig, segment miris.Segment, fre
 	// disconnects is set of disconnected indices in track
 	// if i is disconnected, it means
 	getLongestSegment := func(track []miris.Detection, disconnects map[int]bool) []miris.Detection {
-		discList := []int{-1, len(track)-1}
+		discList := []int{-1, len(track) - 1}
 		for idx := range disconnects {
 			discList = append(discList, idx)
 		}
 		sort.Ints(discList)
 		var longestSegment []miris.Detection
 		for i := 0; i < len(discList)-1; i++ {
-			segment := track[discList[i]+1:discList[i+1]+1]
+			segment := track[discList[i]+1 : discList[i+1]+1]
 			if len(segment) > len(longestSegment) {
 				longestSegment = segment
 			}
@@ -151,7 +151,7 @@ func GetQSamplesSegment(ppCfg miris.PreprocessConfig, segment miris.Segment, fre
 }
 
 type qjob struct {
-	freq int
+	freq    int
 	segment miris.Segment
 }
 
@@ -181,7 +181,7 @@ func GetQSamples(maxFreq int, ppCfg miris.PreprocessConfig, modelCfg miris.Model
 	close(jobch)
 	allSamples := make(map[int][]float64)
 	for i := 0; i < QThreads; i++ {
-		m := <- donech
+		m := <-donech
 		for freq, samples := range m {
 			allSamples[freq] = append(allSamples[freq], samples...)
 		}
