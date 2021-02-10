@@ -237,6 +237,8 @@ session.run(m.init_op)
 
 print('begin training')
 best_loss = None
+epochs_without_better = 0
+learning_rate = 1e-3
 
 for epoch in range(9999):
 	start_time = time.time()
@@ -248,7 +250,7 @@ for epoch in range(9999):
 		feed_dict = {
 			m.input_crops: numpy.concatenate([example[2] for example in batch_examples], axis=0).astype('float32')/255,
 			m.is_training: True,
-			m.learning_rate: 1e-3,
+			m.learning_rate: learning_rate,
 		}
 		feed_dict.update(d1)
 		feed_dict.update(d2)
@@ -279,3 +281,12 @@ for epoch in range(9999):
 	if best_loss is None or val_loss < best_loss:
 		best_loss = val_loss
 		m.saver.save(session, MODEL_PATH)
+	else:
+		epochs_without_better += 1
+		if epochs_without_better >= 25:
+			if learning_rate < 1e-3:
+				break
+
+			print('reduce learning rate to 1e-4')
+			learning_rate = 1e-4
+			epochs_without_better = 0

@@ -50,6 +50,8 @@ session.run(m.init_op)
 
 print('begin training')
 best_loss = None
+epochs_without_better = 0
+learning_rate = 1e-3
 
 for epoch in range(9999):
 	start_time = time.time()
@@ -61,7 +63,7 @@ for epoch in range(9999):
 			m.inputs: [example[0] for example in batch_examples],
 			m.targets: [example[2] for example in batch_examples],
 			m.lengths: [example[1] for example in batch_examples],
-			m.learning_rate: 1e-3,
+			m.learning_rate: learning_rate,
 		})
 		train_losses.append(loss)
 	train_loss = numpy.mean(train_losses)
@@ -86,3 +88,12 @@ for epoch in range(9999):
 	if best_loss is None or val_loss < best_loss:
 		best_loss = val_loss
 		m.saver.save(session, model_path)
+	else:
+		epochs_without_better += 1
+		if epochs_without_better >= 25:
+			if learning_rate < 1e-3:
+				break
+
+			print('reduce learning rate to 1e-4')
+			learning_rate = 1e-4
+			epochs_without_better = 0
