@@ -88,6 +88,7 @@ for epoch in range(9999):
 	if best_loss is None or val_loss < best_loss:
 		best_loss = val_loss
 		m.saver.save(session, model_path)
+		epochs_without_better = 0
 	else:
 		epochs_without_better += 1
 		if epochs_without_better >= 25:
