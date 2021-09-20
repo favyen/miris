@@ -70,7 +70,7 @@ the paper) at 10/16 fps (i.e., looking at one in every 16 frames), we would:
 	go run prepare_rnn.go shibuya 16
 	cd models/gnn
 	python train.py shibuya
-	cd ../rnn
+	cd github.com/favyen/mirisrnn
 	python train.py ../../logs/shibuya/16/filter_rnn_ds.json ../../logs/shibuya/16/filter-rnn/model
 	python train.py ../../logs/shibuya/16/refine_rnn_ds.json ../../logs/shibuya/16/refine-rnn/model
 

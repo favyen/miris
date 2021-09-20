@@ -6,7 +6,7 @@ import (
 
 func SamplePoints(track []Detection) []common.Point {
 	var points []common.Point
-	for i := 0; i < len(track) - 1; i++ {
+	for i := 0; i < len(track)-1; i++ {
 		segment := common.Segment{track[i].Bounds().Center(), track[i+1].Bounds().Center()}
 		points = append(points, segment.Sample(10)...)
 	}
@@ -16,14 +16,14 @@ func SamplePoints(track []Detection) []common.Point {
 func SampleNormalizedPoints(track []Detection) []common.Point {
 	// sample twenty points along the track
 	var trackLength float64 = 0
-	for i := 0; i < len(track) - 1; i++ {
+	for i := 0; i < len(track)-1; i++ {
 		trackLength += track[i].Bounds().Center().Distance(track[i+1].Bounds().Center())
 	}
 	pointFreq := trackLength / 20
 
 	points := []common.Point{track[0].Bounds().Center()}
 	remaining := pointFreq
-	for i := 0; i < len(track) - 1; i++ {
+	for i := 0; i < len(track)-1; i++ {
 		segment := common.Segment{track[i].Bounds().Center(), track[i+1].Bounds().Center()}
 		for segment.Length() > remaining {
 			vector := segment.Vector()

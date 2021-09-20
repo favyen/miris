@@ -1,8 +1,8 @@
 package planner
 
 import (
-	"../filter"
-	"../miris"
+	"github.com/favyen/miris/filter"
+	"github.com/favyen/miris/miris"
 
 	"log"
 	"sort"
@@ -26,8 +26,8 @@ func PlanFilter(context plannerContext) miris.FilterPlan {
 
 	// get coarse validation tracks
 	// don't create much more than 25K true and 25K false tracks
-	coarsePerTrueTrack := 1+(50000/valTrue)
-	coarsePerFalseTrack := 1+(50000/valFalse)
+	coarsePerTrueTrack := 1 + (50000 / valTrue)
+	coarsePerFalseTrack := 1 + (50000 / valFalse)
 	log.Printf("[plan-filter] compute coarse tracks (max true=%d false=%d per track with %d val tracks)", coarsePerTrueTrack, coarsePerFalseTrack, len(context.valTracks))
 	var coarseTracks [][]miris.Detection
 	var coarseLabels []bool
@@ -64,7 +64,7 @@ func PlanFilter(context plannerContext) miris.FilterPlan {
 	}
 	log.Printf("[plan-filter] best filter is %s with precision=%v, threshold=%v", bestName, bestPrecision, bestThreshold)
 	return miris.FilterPlan{
-		Name: bestName,
+		Name:      bestName,
 		Threshold: bestThreshold,
 	}
 }

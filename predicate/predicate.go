@@ -1,8 +1,8 @@
 package predicate
 
 import (
+	"github.com/favyen/miris/miris"
 	"github.com/mitroadmaps/gomapinfer/common"
-	"../miris"
 )
 
 var predicates = make(map[string]Predicate)
@@ -76,7 +76,7 @@ func Or(predicates ...Predicate) Predicate {
 // returns index of latest detection that precedes idx by at least (nframes)
 func GetPredTime(track []miris.Detection, idx int, nframes int) int {
 	for i := idx - 1; i >= 0; i-- {
-		if track[i].FrameIdx < track[idx].FrameIdx - nframes {
+		if track[i].FrameIdx < track[idx].FrameIdx-nframes {
 			return i
 		}
 	}
@@ -85,7 +85,7 @@ func GetPredTime(track []miris.Detection, idx int, nframes int) int {
 
 // returns index of closest predecessor to idx that is at least distance away
 func GetPredDistance(track []miris.Detection, idx int, distance float64) int {
-	for i := idx - 1 ; i >= 0; i-- {
+	for i := idx - 1; i >= 0; i-- {
 		if track[i].Bounds().Center().Distance(track[idx].Bounds().Center()) >= distance {
 			return i
 		}

@@ -1,30 +1,30 @@
 package planner
 
 import (
-	"../miris"
-	"../predicate"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"log"
 )
 
 type plannerContext struct {
-	ppCfg miris.PreprocessConfig
-	modelCfg miris.ModelConfig
-	freq int
-	bound float64
+	ppCfg           miris.PreprocessConfig
+	modelCfg        miris.ModelConfig
+	freq            int
+	bound           float64
 	trainDetections [][]miris.Detection
-	trainTracks [][]miris.Detection
-	valDetections [][]miris.Detection
-	valTracks [][]miris.Detection
-	predFunc predicate.Predicate
+	trainTracks     [][]miris.Detection
+	valDetections   [][]miris.Detection
+	valTracks       [][]miris.Detection
+	predFunc        predicate.Predicate
 }
 
 func PlanFilterRefine(ppCfg miris.PreprocessConfig, modelCfg miris.ModelConfig, freq int, bound float64, existingFilterPlan *miris.FilterPlan) (miris.FilterPlan, miris.RefinePlan) {
 	context := plannerContext{
-		ppCfg: ppCfg,
+		ppCfg:    ppCfg,
 		modelCfg: modelCfg,
-		freq: freq,
-		bound: bound,
+		freq:     freq,
+		bound:    bound,
 	}
 
 	increment := func(detections [][]miris.Detection, frames int, trackID int) {

@@ -1,13 +1,13 @@
 package refine
 
 import (
-	"../miris"
-	"../predicate"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/predicate"
 
 	"fmt"
 	"math"
-	"strconv"
 	"sort"
+	"strconv"
 )
 
 func GetCoarseIntermediate(freq int, k int, track []miris.Detection) []miris.Detection {
@@ -15,7 +15,7 @@ func GetCoarseIntermediate(freq int, k int, track []miris.Detection) []miris.Det
 	end := -1
 	var coarse []miris.Detection
 	for i, detection := range track {
-		if detection.FrameIdx % freq != k {
+		if detection.FrameIdx%freq != k {
 			continue
 		}
 		coarse = append(coarse, detection)
@@ -33,7 +33,7 @@ func GetCoarseIntermediate(freq int, k int, track []miris.Detection) []miris.Det
 	out = append(out, coarse[0])
 	for _, detection := range coarse[1:] {
 		last := out[len(out)-1]
-		for frameIdx := last.FrameIdx+freq; frameIdx < detection.FrameIdx; frameIdx += freq {
+		for frameIdx := last.FrameIdx + freq; frameIdx < detection.FrameIdx; frameIdx += freq {
 			out = append(out, miris.Interpolate(last, detection, frameIdx))
 		}
 		out = append(out, detection)
@@ -43,14 +43,14 @@ func GetCoarseIntermediate(freq int, k int, track []miris.Detection) []miris.Det
 }
 
 type AccelRefiner struct {
-	freq int
-	predFunc predicate.Predicate
+	freq           int
+	predFunc       predicate.Predicate
 	accelThreshold float64
 }
 
 func MakeAccelRefiner(freq int, trainTracks [][]miris.Detection, predFunc predicate.Predicate, modelCfg map[string]string, cfg map[string]string) Refiner {
 	r := &AccelRefiner{
-		freq: freq,
+		freq:     freq,
 		predFunc: predFunc,
 	}
 	if cfg["threshold"] != "" {
@@ -72,7 +72,7 @@ func (r *AccelRefiner) insertDetection(coarse []miris.Detection, original []miri
 	var insertIdx int = 0
 	for i := 0; i < len(coarse); i++ {
 		if coarse[i].FrameIdx < frameIdx {
-			insertIdx = i+1
+			insertIdx = i + 1
 		}
 	}
 	if insertIdx == 0 || insertIdx == len(coarse) {
@@ -97,7 +97,7 @@ func (r *AccelRefiner) refineOnce(track []miris.Detection) (int, int, float64) {
 	var bestAccel float64
 	var bestIdx int = -1
 	for i := 1; i < len(track)-1; i++ {
-		if track[i].FrameIdx - track[i-1].FrameIdx <= 1 && track[i+1].FrameIdx - track[i].FrameIdx <= 1 {
+		if track[i].FrameIdx-track[i-1].FrameIdx <= 1 && track[i+1].FrameIdx-track[i].FrameIdx <= 1 {
 			continue
 		}
 		vector1 := track[i].Bounds().Center().Sub(track[i-1].Bounds().Center())
@@ -113,10 +113,10 @@ func (r *AccelRefiner) refineOnce(track []miris.Detection) (int, int, float64) {
 	}
 	f1 := -1
 	f2 := -1
-	if track[bestIdx].FrameIdx - track[bestIdx-1].FrameIdx > 1 {
+	if track[bestIdx].FrameIdx-track[bestIdx-1].FrameIdx > 1 {
 		f1 = (track[bestIdx-1].FrameIdx + track[bestIdx].FrameIdx) / 2
 	}
-	if track[bestIdx+1].FrameIdx - track[bestIdx].FrameIdx > 1 {
+	if track[bestIdx+1].FrameIdx-track[bestIdx].FrameIdx > 1 {
 		f2 = (track[bestIdx].FrameIdx + track[bestIdx+1].FrameIdx) / 2
 	}
 	return f1, f2, bestAccel

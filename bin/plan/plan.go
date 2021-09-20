@@ -1,9 +1,9 @@
 package main
 
 import (
-	"./data"
-	"./miris"
-	"./planner"
+	"github.com/favyen/miris/data"
+	"github.com/favyen/miris/miris"
+	"github.com/favyen/miris/planner"
 
 	"fmt"
 	"log"
@@ -31,10 +31,10 @@ func main() {
 	q := planner.PlanQ(qSamples, bound)
 	log.Println("finished planning q", q)
 	plan := miris.PlannerConfig{
-		Freq: freq,
-		Bound: bound,
+		Freq:     freq,
+		Bound:    bound,
 		QSamples: qSamples,
-		Q: q,
+		Q:        q,
 	}
 	miris.WriteJSON(fmt.Sprintf("logs/%s/%d/%v/plan.json", predName, freq, bound), plan)
 	filterPlan, refinePlan := planner.PlanFilterRefine(ppCfg, modelCfg, freq, bound, nil)
@@ -43,4 +43,3 @@ func main() {
 	log.Println(plan)
 	miris.WriteJSON(fmt.Sprintf("logs/%s/%d/%v/plan.json", predName, freq, bound), plan)
 }
-
